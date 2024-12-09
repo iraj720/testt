@@ -1,34 +1,54 @@
 package main
 
-import (
-	"net/http"
-	"test/handler"
-	"test/metrics"
-
-	"github.com/labstack/echo"
-	"github.com/sirupsen/logrus"
-)
-
-var Calls metrics.Metrics
+import "fmt"
 
 func main() {
-	e := echo.New()
+	arr := []int32{5, 1, 2, 3, 4}
 
-	Calls = metrics.NewMetrics()
+	x := int32(4)
 
-	helloController := handler.NewHelloHandler(Calls)
-	goodbyeController := handler.NewGoodbyeHandler(Calls)
+	index := mergeSearch(arr, int32(len(arr)/2))
 
-	e.GET("/hello", helloController.Hello)
-	e.GET("/goodbye", goodbyeController.Goodbye)
+	findIn1 := binarySearch(arr[:index], x)
+	findIn2 := binarySearch(arr[index:], x)
 
-	e.GET("/report", Report)
+	fmt.Println(index)
+	fmt.Println(findIn1)
+	fmt.Println(findIn1 || findIn2)
+}
 
-	if err := e.Start("127.0.0.1:8080"); err != nil {
-		logrus.Fatalf("failed to start http server: %s", err.Error())
+func mergeSearch(arr []int32, searchIndex int32) int32 {
+	if len(arr) == 2 {
+		if arr[0] > arr[1] {
+			return searchIndex
+		}
+	}
+
+	last := int32(len(arr) - 1)
+	first := arr[0]
+
+	searchIndexTemp := int32(len(arr) / 2)
+
+	for {
+		if arr[searchIndexTemp] > first {
+			return mergeSearch(arr[searchIndexTemp:], searchIndexTemp)
+		} else if arr[searchIndexTemp] <= last {
+			return mergeSearch(arr[:searchIndexTemp+1], searchIndexTemp)
+		}
 	}
 }
 
-func Report(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, Calls.GetBatchReport())
+func binarySearch(arr []int32, x int32) bool {
+	if len(arr) == 1 {
+		return x == arr[0]
+	}
+
+	searchIndex := len(arr) / 2
+	for {
+		if arr[searchIndex] > x {
+			return binarySearch(arr[:searchIndex], x)
+		} else if arr[searchIndex] <= x {
+			return binarySearch(arr[searchIndex:], x)
+		}
+	}
 }
